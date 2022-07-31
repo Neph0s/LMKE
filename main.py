@@ -76,7 +76,7 @@ if __name__ == '__main__':
 		plm_name = "prajjwal1/bert-tiny"
 		t_model = 'bert'
 	elif arg.plm =='deberta':
-		plm_name = './deberta'
+		plm_name = 'microsoft/deberta-base'
 		t_model = 'bert'
 
 	if arg.data == 'fb13':
@@ -120,16 +120,6 @@ if __name__ == '__main__':
 	lm_tokenizer = AutoTokenizer.from_pretrained(plm_name, do_basic_tokenize=False, cache_dir = './cached_model')
 	lm_model = AutoModel.from_pretrained(plm_name, config=lm_config, cache_dir = './cached_model')
 	
-	import copy
-	lm_model.plm = copy.deepcopy(lm_model)
-	
-	lm_model.plm.resize_token_embeddings(30523)
-	load_path = '/mnt/nefeli/celm/pretraining/params/bert-bce_no_balance-batch_size=16-accumulation=16-epc_19_metric_f1.pt'
- 	
-	print('loading from ',load_path)
-	_ = lm_model.load_state_dict(torch.load(load_path)['model_state_dict'], strict=False)
-	print(_)
-	lm_model = lm_model.plm
 	
 
 	data_loader = DataLoader(in_paths, lm_tokenizer, batch_size=arg.batch_size, neg_rate =neg_rate, 

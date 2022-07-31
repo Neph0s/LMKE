@@ -104,7 +104,11 @@ class LMKE(nn.Module):
 		h_emb_list = []
 		r_emb_list = []
 		t_emb_list = []
-		triple_embs = logits[0][:, 0, :]
+
+		try:
+			triple_embs = logits[1]
+		else:
+			triple_embs = logits[0][:, 0, :]
 
 		for i in range(batch_size):
 			h_emb_list.append(logits[0][i, h_pos[i], :].unsqueeze(0))

@@ -107,7 +107,7 @@ class LMKE(nn.Module):
 
 		try:
 			triple_embs = logits[1]
-		else:
+		except:
 			triple_embs = logits[0][:, 0, :]
 
 		for i in range(batch_size):

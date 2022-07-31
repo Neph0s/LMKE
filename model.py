@@ -10,7 +10,7 @@ import random
 import copy
 
 num_deg_features = 2
-class TextKGE(nn.Module):
+class LMKE(nn.Module):
 	def __init__(self, lm_model, n_ent, n_rel, add_tokens, contrastive):
 		super().__init__()
 
@@ -98,13 +98,17 @@ class TextKGE(nn.Module):
 
 			inputs['inputs_embeds'] = input_embeds
 
-		logits = lm_model(**inputs)
+		logits = lm_model(**inputs) 
 		
 
 		h_emb_list = []
 		r_emb_list = []
 		t_emb_list = []
-		triple_embs = logits[1]
+
+		try:
+			triple_embs = logits[1]
+		except:
+			triple_embs = logits[0][:, 0, :]
 
 		for i in range(batch_size):
 			h_emb_list.append(logits[0][i, h_pos[i], :].unsqueeze(0))

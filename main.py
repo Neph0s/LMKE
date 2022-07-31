@@ -15,7 +15,7 @@ from transformers import get_linear_schedule_with_warmup
 
 from trainer import Trainer
 from dataloader import DataLoader
-from model import TextKGE
+from model import LMKE
 
 
 if __name__ == '__main__':
@@ -30,7 +30,7 @@ if __name__ == '__main__':
 	parser.add_argument('--weight_decay', type=float, default=1e-7)
 
 	parser.add_argument('--data', type=str, default='fb15k-237') 
-	parser.add_argument('--plm', type=str, default='bert', choices = ['bert', 'bert_tiny'])
+	parser.add_argument('--plm', type=str, default='bert', choices = ['bert', 'bert_tiny', 'deberta'])
 	parser.add_argument('--description', type=str, default='desc')
 
 	parser.add_argument('--load_path', type=str, default=None)
@@ -49,6 +49,7 @@ if __name__ == '__main__':
 	parser.add_argument('--no_use_lm', default=False, action = 'store_true')
 	parser.add_argument('--use_structure', default=False, action = 'store_true')
 	parser.add_argument('--contrastive', default=False, action = 'store_true')
+	parser.add_argument('--wandb', default=False, action = 'store_true')
 
 	parser.add_argument('--task', default='LP', choices=['LP', 'TC'])
 
@@ -74,7 +75,9 @@ if __name__ == '__main__':
 	elif arg.plm == 'bert_tiny':
 		plm_name = "prajjwal1/bert-tiny"
 		t_model = 'bert'
-
+	elif arg.plm =='deberta':
+		plm_name = 'microsoft/deberta-base'
+		t_model = 'bert'
 
 	if arg.data == 'fb13':
 		in_paths = {
@@ -116,6 +119,8 @@ if __name__ == '__main__':
 	lm_config = AutoConfig.from_pretrained(plm_name, cache_dir = './cached_model')
 	lm_tokenizer = AutoTokenizer.from_pretrained(plm_name, do_basic_tokenize=False, cache_dir = './cached_model')
 	lm_model = AutoModel.from_pretrained(plm_name, config=lm_config, cache_dir = './cached_model')
+	
+	
 
 	data_loader = DataLoader(in_paths, lm_tokenizer, batch_size=arg.batch_size, neg_rate =neg_rate, 
 		add_tokens = arg.add_tokens, p_tuning = arg.p_tuning, rdrop = arg.rdrop, model = t_model)
@@ -125,7 +130,7 @@ if __name__ == '__main__':
 		lm_model.resize_token_embeddings(len(lm_tokenizer))
 
 
-	model = TextKGE(lm_model, n_ent = len(data_loader.ent2id), n_rel = len(data_loader.rel2id), add_tokens = arg.add_tokens, contrastive = arg.contrastive)
+	model = LMKE(lm_model, n_ent = len(data_loader.ent2id), n_rel = len(data_loader.rel2id), add_tokens = arg.add_tokens, contrastive = arg.contrastive)
 
 	no_decay = ["bias", "LayerNorm.weight"]
 	param_group = [
@@ -176,7 +181,8 @@ if __name__ == '__main__':
 		'self_adversarial':arg.self_adversarial,
 		'no_use_lm': arg.no_use_lm,
 		'contrastive': arg.contrastive,
-		'task': arg.task
+		'task': arg.task,
+		'wandb': arg.wandb
 	}
 
 

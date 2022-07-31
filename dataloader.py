@@ -159,6 +159,7 @@ class DataLoader(object):
 			self.valid_set, self.valid_set_with_neg = self.load_dataset_with_neg(in_paths['valid'])
 			self.test_set, self.test_set_with_neg = self.load_dataset_with_neg(in_paths['test'])
 
+
 		self.whole_set = self.train_set + self.valid_set + self.test_set
 
 		self.uid2text =  {}
@@ -256,6 +257,7 @@ class DataLoader(object):
 					uid2text[uid] = text 
 
 				tokens = tokenizer.tokenize(text)
+
 				if uid not in uid2tokens.keys():
 					uid2tokens[uid] = tokens
 
@@ -360,14 +362,14 @@ class DataLoader(object):
 		num_ent_rel_tokens = len(ent2id) + len(rel2id)
 
 		mask_idx = self.tokenizer.convert_tokens_to_ids(self.tokenizer.mask_token)
-
+		cls_idx = self.tokenizer.convert_tokens_to_ids(self.tokenizer.cls_token)
 
 		for i, _ in enumerate(batch_tokens['input_ids']):
 			triple = batch_triples[i]
 			h, r, t = triple
 
 			if not self.add_tokens:
-				cls_pos, h_pos, r_pos, t_pos = torch.where((_==101) + (_==103))[0]
+				cls_pos, h_pos, r_pos, t_pos = torch.where((_==mask_idx) + (_==cls_idx))[0]
 			else:
 				h_pos, r_pos, t_pos = torch.where( (_ >= orig_vocab_size) * (_ < orig_vocab_size + num_ent_rel_tokens) + (_ == mask_idx) )[0]
 

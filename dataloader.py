@@ -10,7 +10,6 @@ import copy
 from transformers import BatchEncoding
 
 count_sampler = 0
-num_limit= 100
 
 class DataSampler(object):
 	def __init__(self, datasetName, mode, pos_dataset, whole_dataset, batch_size, entity_set, relation_set, neg_rate, groundtruth=None, possible_entities=None, rdrop=False, pos_neg_dataset=None):
@@ -205,16 +204,6 @@ class DataLoader(object):
 
 		self.count_degrees()
 
-		# few shot 
-		#self.train_set = self.train_set[:num_limit]
-
-		'''
-		self.train_set = [i for i in self.train_set if self.statistics['degrees'][i[0]]  < 3 or self.statistics['degrees'][i[-1]]  < 3]
-		self.valid_set = [i for i in self.valid_set if self.statistics['degrees'][i[0]]  < 3 or self.statistics['degrees'][i[-1]]  < 3]
-		self.test_set = [i for i in self.test_set if self.statistics['degrees'][i[0]]  < 3 or self.statistics['degrees'][i[-1]]  < 3]
-
-		print('Num Train {} Valid {} Test {}'.format(len(self.train_set), len(self.valid_set), len(self.test_set)))
-		'''
 
 	def load_dataset(self, in_path):
 		dataset = []
@@ -284,8 +273,8 @@ class DataLoader(object):
 
 		if True:
 			# 512 tokens, 1 CLS, 1 SEP, 1 head, 1 rel, 1 tail, so 507 remaining.
-			h_n_tokens = 64 #241
-			t_n_tokens = 64 #241
+			h_n_tokens = 241
+			t_n_tokens = 241
 			r_n_tokens = 16
 
 		h, r, t = triple
@@ -321,7 +310,7 @@ class DataLoader(object):
 		ent2id = self.ent2id
 		rel2id = self.rel2id
 		
-		n_tokens = 125 #508
+		n_tokens = 508
 
 		text_tokens = self.uid2tokens.get(target, [])[:n_tokens] 
 		

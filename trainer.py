@@ -8,6 +8,7 @@ import math
 import os
 import pickle
 import numpy as np
+import wandb
 
 save_folder = './params/'
 
@@ -107,6 +108,13 @@ class Trainer:
 		sigmoid = torch.nn.Sigmoid()
 
 		model.train()
+
+		if hyperparams['wandb']:
+			wandb.init(
+				project="lmke",
+				name=self.identifier,
+				config=hyperparams
+			)
 
 		degrees = data_loader.statistics['degrees']
 
@@ -370,6 +378,7 @@ class Trainer:
 				self.link_prediction(epc)
 			else:
 				self.triple_classification(epc)
+		if hyperparams['wandb'] : wandb.finish()
 
 	def triple_classification(self, epc=-1, split='valid'):
 		model = self.model
@@ -442,6 +451,8 @@ class Trainer:
 
 			print('{} Triple Classification: Epoch: {} , Avg_Loss: {}, Avg_Accuracy: {}, Time: {}'.format(
 				split, epc, avg_loss_triple_classification, avg_accuracy, time_epoch))
+
+			if hyperparams['wandb']: wandb.log({'acc': avg_accuracy})
 
 			if split != 'test':
 				self.save_model(epc, 'acc', avg_accuracy)
@@ -733,6 +744,8 @@ class Trainer:
 			self.update_metric(epc, 'fil_hits3', fil_hits3)
 			#self.update_metric(epc, 'fil_hits10', fil_hits10)
 			self.save_model(epc, 'fil_hits10', fil_hits10)
+
+			if hyperparams['wandb']: wandb.log({'fil_mr': fil_mr, 'fil_mrr': fil_mrr, 'fil_hits1': fil_hits1, 'fil_hits3': fil_his3, 'fil_hits10': fil_hits10, 'raw_hits10': raw_hits10})
 
 		model.train()
 

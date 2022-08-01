@@ -32,9 +32,12 @@ class DataSampler(object):
 		if not os.path.exists('./sampler'):
 			os.makedirs('./sampler')
 
-		global count_sampler
-		count_sampler += 1
-		dataset_path = 'sampler/{}-{}-{}-{}.pkl'.format(datasetName, mode, neg_rate, count_sampler)
+		if mode == 'train':
+			global count_sampler
+			count_sampler += 1
+			dataset_path = 'sampler/{}-{}-{}-{}.pkl'.format(datasetName, mode, neg_rate, count_sampler)
+		else:
+			dataset_path = 'sampler/{}-{}-{}.pkl'.format(datasetName, mode, neg_rate)
 
 		if self.datasetName in ['fb13'] and mode != 'train':
 			self.dataset = [ ((i[0], i[1], i[2]), i[3]) for i in self.pos_neg_dataset]

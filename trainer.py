@@ -387,7 +387,7 @@ class Trainer:
 		device = self.device
 		hyperparams = self.hyperparams
 
-		batch_size = 256
+		batch_size = 64
 		neg_rate = 1
 
 		data_loader = self.data_loader

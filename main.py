@@ -76,7 +76,7 @@ if __name__ == '__main__':
 		plm_name = "prajjwal1/bert-tiny"
 		t_model = 'bert'
 	elif arg.plm =='deberta':
-		plm_name = 'microsoft/deberta-base'
+		plm_name = 'microsoft/deberta-v3-base'
 		t_model = 'bert'
 
 	if arg.data == 'fb13':

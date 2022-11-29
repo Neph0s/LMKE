@@ -173,7 +173,7 @@ class Trainer:
 						labels = [i[1] for i in batch]
 						labels = torch.tensor(labels).to(device)
 
-						preds = model(inputs, positions, mode, triple_degrees)
+						preds = model(inputs, positions, mode)
 						loss = criterion(preds, labels) 
 
 						pred_labels = preds.argmax(dim=1)
@@ -260,6 +260,7 @@ class Trainer:
 							if hyperparams['contrastive']:
 								target_preds = model(real_inputs, real_positions, mode)
 								target_encodes = model.encode_target(target_inputs, target_positions, mode)
+
 								preds = model.match(target_preds, target_encodes, real_triple_degrees, mode)
 								
 							else:
@@ -573,11 +574,14 @@ class Trainer:
 					if target == 'head':
 						triples = [(expects[0], giv_rel, giv_ent)]
 						mode = "link_prediction_h"
+
 					else:
 						triples = [(giv_ent, giv_rel, expects[0])]
 						mode = "link_prediction_t"
 
 					triple_degrees = [ [ degrees.get(e, 0) for e in triple] for triple in triples]
+					ent_list_degrees = [ degrees.get(e, 0) for e in entity_list]
+
 
 					inputs, positions = data_loader.batch_tokenize(triples, mode)
 					inputs.to(device)	
@@ -587,7 +591,7 @@ class Trainer:
 							target_preds = model(inputs, positions, mode)
 							target_encodes = ent_target_encoded
 						
-							preds = model.match(target_preds, target_encodes, triple_degrees, mode)
+							preds = model.match(target_preds, target_encodes, triple_degrees, mode, test=True, ent_list_degrees = ent_list_degrees)
 						else:
 							preds, confidence = model(inputs, positions, mode)
 						preds = sigmoid(preds)
@@ -673,7 +677,7 @@ class Trainer:
 					 ), file=f)
 
 
-		if split == 'test' or epc % 10 == 0:
+		if True :##split == 'test' or epc % 10 == 0:
 			for setting in ['filter']:
 				for group in groups:
 					# Average over predicting head or tail
@@ -728,6 +732,8 @@ class Trainer:
 
 		print('Overall: MR {0:.5f} MRR {1:.5f} hits 1 {2:.5f} 3 {3:.5f} 10 {4:.5f}, Setting: Filter '.format(
 			fil_mr, fil_mrr, fil_hits1, fil_hits3, fil_hits10), file=f)
+		print('Overall: MR {0:.5f} MRR {1:.5f} hits 1 {2:.5f} 3 {3:.5f} 10 {4:.5f}, Setting: Filter '.format(
+			fil_mr, fil_mrr, fil_hits1, fil_hits3, fil_hits10))
 		f.close()
 
 		if split != 'test':
@@ -745,7 +751,7 @@ class Trainer:
 			#self.update_metric(epc, 'fil_hits10', fil_hits10)
 			self.save_model(epc, 'fil_hits10', fil_hits10)
 
-			if hyperparams['wandb']: wandb.log({'fil_mr': fil_mr, 'fil_mrr': fil_mrr, 'fil_hits1': fil_hits1, 'fil_hits3': fil_his3, 'fil_hits10': fil_hits10, 'raw_hits10': raw_hits10})
+			if hyperparams['wandb']: wandb.log({'fil_mr': fil_mr, 'fil_mrr': fil_mrr, 'fil_hits1': fil_hits1, 'fil_hits3': fil_hits3, 'fil_hits10': fil_hits10, 'raw_hits10': raw_hits10})
 
 		model.train()
 

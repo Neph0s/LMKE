@@ -42,14 +42,28 @@ class LMKE(nn.Module):
 	
 
 		self.sim_classifier = nn.Sequential(nn.Linear(self.hidden_size * 4 + num_deg_features, self.hidden_size),
-                                      nn.ReLU(),
-                                      nn.Linear(self.hidden_size, 1))
+		                              nn.ReLU(),
+		                              nn.Linear(self.hidden_size, 1))
+		'''
+		self.sim_classifier = nn.Sequential(nn.Linear(self.hidden_size * 4, self.hidden_size),
+									  nn.ReLU(),
+									  nn.Linear(self.hidden_size + num_deg_features, 1))
+		'''
+		'''
+		self.sim_classifier_h = nn.Sequential(nn.Linear(self.hidden_size * 4, self.hidden_size),
+									  nn.ReLU(),
+									  nn.Linear(self.hidden_size + num_deg_features, 1)) 
+
+		self.sim_classifier_t = nn.Sequential(nn.Linear(self.hidden_size * 4, self.hidden_size),
+									  nn.ReLU(),
+									  nn.Linear(self.hidden_size + num_deg_features, 1))
+		'''
 
 		self.ensemble_weights_pred_h = nn.Linear(num_deg_features, 2)
 		self.ensemble_weights_pred_r = nn.Linear(num_deg_features, 2)
 		self.ensemble_weights_pred_t = nn.Linear(num_deg_features, 2)
 
-	def forward(self, inputs, positions, mode, triple_degrees=None):
+	def forward(self, inputs, positions, mode):
 
 		batch_size = len(positions)
 
@@ -260,7 +274,7 @@ class LMKE(nn.Module):
 
 		if mode in ['link_prediction_h', 'head']:
 			triple_score = self.score_triples_rotate(can_ent_emb.expand(batch_size, can_ent_emb.shape[0], can_ent_emb.shape[1], can_ent_emb.shape[2]), \
-			 	r_embs.unsqueeze(1), t_embs.unsqueeze(1), mode)
+				r_embs.unsqueeze(1), t_embs.unsqueeze(1), mode)
 		elif mode in ['link_prediction_t', 'tail']:
 			triple_score = self.score_triples_rotate(h_embs.unsqueeze(1), r_embs.unsqueeze(1), \
 				can_ent_emb.expand(batch_size, can_ent_emb.shape[0], can_ent_emb.shape[1], can_ent_emb.shape[2]), mode)
@@ -293,26 +307,74 @@ class LMKE(nn.Module):
 
 		return target_embs
 
-	def match(self, target_preds, target_encoded, triple_degrees, mode):
+	def match(self, target_preds, target_encoded, triple_degrees, mode, test=False, ent_list_degrees=None):
 		device = self.lm_model_given.device
 
 		sim = torch.zeros(target_preds.shape[0], target_encoded.shape[0]).to(self.lm_model_given.device)
+		
+		if not test:
+			assert(ent_list_degrees == None) 
+
 		for it, target_pred in enumerate(target_preds):
+			#import pdb 
+			#pdb.set_trace()
 			triple_degree = triple_degrees[it]
 			h_deg, r_deg, t_deg = torch.tensor(triple_degree).float().to(device) 
-			h_deg, r_deg, t_deg = h_deg.unsqueeze(0), r_deg.unsqueeze(0), t_deg.unsqueeze(0)
+			h_deg, r_deg, t_deg = h_deg.unsqueeze(0), r_deg.unsqueeze(0), t_deg.unsqueeze(0) 
+
+			if not test:
+			
+				if mode == "link_prediction_h":
+					ent_list_degrees = [deg[0] for deg in triple_degrees]
+				elif mode == 'link_prediction_t':
+					ent_list_degrees = [deg[-1] for deg in triple_degrees]
+
+			if mode == 'link_prediction_h':
+				h_deg = torch.tensor(ent_list_degrees).float().to(device).unsqueeze(1)
+				t_deg = t_deg.expand(target_encoded.shape[0], 1)
+			elif mode == 'link_prediction_t':
+				t_deg = torch.tensor(ent_list_degrees).float().to(device).unsqueeze(1)
+				h_deg = h_deg.expand(target_encoded.shape[0], 1) 
+
 			h_logdeg, r_logdeg, t_logdeg = (h_deg+1).log(), (r_deg+1).log(), (t_deg+1).log()
 
-			
 			if mode == 'link_prediction_h': 
 				deg_feature = torch.cat([h_logdeg, t_logdeg], dim=-1)
 			elif mode == 'link_prediction_t':
 				deg_feature = torch.cat([t_logdeg, h_logdeg], dim=-1)
 
 			target_pred = target_pred.expand(target_encoded.shape[0], target_pred.shape[0])
-			deg_feature = deg_feature.expand(target_encoded.shape[0], deg_feature.shape[0])
+			#print(deg_feature)
+
+			#if not test:
+			#	deg_feature = deg_feature.expand(target_encoded.shape[0], deg_feature.shape[0])
+
 			#sim[it] = self.sim_classifier(torch.cat([target_pred, target_encoded, target_pred - target_encoded, target_pred * target_encoded], dim=-1)).T
+			
 			sim[it] = self.sim_classifier(torch.cat([target_pred, target_encoded, target_pred - target_encoded, target_pred * target_encoded, deg_feature], dim=-1)).T
+			
+			'''
+			logits = self.sim_classifier[0](torch.cat([target_pred, target_encoded, target_pred - target_encoded, target_pred * target_encoded], dim=-1))
+			
+			logits = self.sim_classifier[1](logits)
+			logits = torch.cat([logits, deg_feature], dim=-1)
+			sim[it] = self.sim_classifier[2](logits).T
+			'''
+
+			'''
+			if mode == 'link_prediction_h':
+				logits = self.sim_classifier_h[0](torch.cat([target_pred, target_encoded, target_pred - target_encoded, target_pred * target_encoded], dim=-1))
+			
+				logits = self.sim_classifier_h[1](logits)
+				logits = torch.cat([logits, deg_feature], dim=-1)
+				sim[it] = self.sim_classifier_h[2](logits).T
+			elif mode == 'link_prediction_t':
+				logits = self.sim_classifier_t[0](torch.cat([target_pred, target_encoded, target_pred - target_encoded, target_pred * target_encoded], dim=-1))
+			
+				logits = self.sim_classifier_t[1](logits)
+				logits = torch.cat([logits, deg_feature], dim=-1)
+				sim[it] = self.sim_classifier_t[2](logits).T
+			'''
 		return sim
 
 	

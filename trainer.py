@@ -18,7 +18,7 @@ sample_limit = 10
 margin = 9
 
 class Trainer:
-	def __init__(self, data_loader, model, tokenizer, optimizer, device, hyperparams):
+	def __init__(self, data_loader, model, tokenizer, optimizer, scheduler, device, hyperparams):
 
 		self.data_loader = data_loader
 		self.model = model
@@ -30,6 +30,8 @@ class Trainer:
 		self.hyperparams = hyperparams
 		self.save_folder = save_folder
 		self.load_epoch = hyperparams['load_epoch']
+
+		self.scheduler = scheduler
 
 		model.to(device)
 
@@ -71,8 +73,18 @@ class Trainer:
 				load_path = save_folder + load_path
 
 			if os.path.exists(load_path):
-				model.load_state_dict(torch.load(load_path), strict=False)
-				print('Parameters loaded from {0}.'.format(load_path))
+				
+				try:
+					checkpoint = torch.load(load_path)
+					model.load_state_dict(checkpoint['model_state_dict'], strict=False)
+				
+					optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+					scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+					
+					print('Model & Optimizer  Parameters loaded from {0}.'.format(load_path))
+				except:
+					model.load_state_dict(torch.load(load_path), strict=False)
+					print('Parameters loaded from {0}.'.format(load_path))
 			else:
 				print('Parameters {0} Not Found'.format(load_path))
 
@@ -87,6 +99,7 @@ class Trainer:
 		model = self.model
 		tokenizer = self.tokenizer
 		optimizer = self.optimizer
+		scheduler = self.scheduler
 
 		device = self.device
 		hyperparams = self.hyperparams
@@ -677,7 +690,7 @@ class Trainer:
 					 ), file=f)
 
 
-		if True :##split == 'test' or epc % 10 == 0:
+		if split == 'test' or epc % 10 == 0:
 			for setting in ['filter']:
 				for group in groups:
 					# Average over predicting head or tail
@@ -778,7 +791,13 @@ class Trainer:
 				os.remove(last_path)
 				print('Last parameters {} deleted'.format(last_path))
 			
-			torch.save(self.model.state_dict(), save_path)
+			#torch.save(self.model.state_dict(), save_path)
+			torch.save({
+				'model_state_dict': self.model.state_dict(), 
+				'optimizer_state_dict': self.optimizer.state_dict(),
+				'scheduler_state_dict': self.scheduler.state_dict(),
+			}, save_path)
+
 			print('Parameters saved into ', save_path)
 
 

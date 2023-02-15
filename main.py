@@ -11,7 +11,7 @@ import numpy as np
 from transformers import BertTokenizer, BertModel, BertConfig, BertForMaskedLM
 from transformers import AutoTokenizer, AutoModel, AutoConfig
 from transformers import AdamW
-from transformers import get_linear_schedule_with_warmup
+from transformers import get_linear_schedule_with_warmup, get_constant_schedule_with_warmup
 
 from trainer import Trainer
 from dataloader import DataLoader
@@ -37,6 +37,8 @@ if __name__ == '__main__':
 	parser.add_argument('--load_epoch', type=int, default=-1)
 	parser.add_argument('--load_metric', type=str, default='hits1')
 
+	parser.add_argument('--max_desc_length', type=int, default=512)
+
 	# directly run test
 	parser.add_argument('--link_prediction', default=False, action = 'store_true')
 	parser.add_argument('--triple_classification', default=False, action = 'store_true')
@@ -60,7 +62,7 @@ if __name__ == '__main__':
 	else:
 		neg_rate = 0
 
-	identifier = '{}-{}-{}-batch_size={}-prefix_tuning={}'.format(arg.data, arg.plm, arg.description, arg.batch_size, arg.prefix_tuning)
+	identifier = '{}-{}-{}-batch_size={}-prefix_tuning={}-max_desc_length={}'.format(arg.data, arg.plm, arg.description, arg.batch_size, arg.prefix_tuning, arg.max_desc_length)
 
 	# Set random seed
 	random.seed(arg.seed)
@@ -122,7 +124,7 @@ if __name__ == '__main__':
 	
 	
 
-	data_loader = DataLoader(in_paths, lm_tokenizer, batch_size=arg.batch_size, neg_rate =neg_rate, 
+	data_loader = DataLoader(in_paths, lm_tokenizer, batch_size=arg.batch_size, neg_rate =neg_rate, max_desc_length = arg.max_desc_length,
 		add_tokens = arg.add_tokens, p_tuning = arg.p_tuning, rdrop = arg.rdrop, model = t_model)
 
 	if arg.add_tokens:
@@ -157,7 +159,8 @@ if __name__ == '__main__':
 		]
 
 	optimizer = AdamW(param_group) # transformer AdamW
-	scheduler = None
+
+	scheduler = get_constant_schedule_with_warmup(optimizer, num_warmup_steps=data_loader.step_per_epc)
 	#scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=10000, num_training_steps=arg.epoch * data_loader.step_per_epc)
 
 
@@ -175,6 +178,7 @@ if __name__ == '__main__':
 		'description': arg.description,
 		'neg_rate': neg_rate,
 		'add_tokens': arg.add_tokens,
+		'max_desc_length': arg.max_desc_length,
 		'p_tuning': arg.p_tuning,
 		'rdrop': arg.rdrop,
 		'use_structure': arg.use_structure,
@@ -186,7 +190,7 @@ if __name__ == '__main__':
 	}
 
 
-	trainer = Trainer(data_loader, model, lm_tokenizer, optimizer, device, hyperparams)
+	trainer = Trainer(data_loader, model, lm_tokenizer, optimizer, scheduler, device, hyperparams)
 
 
 	if arg.link_prediction:

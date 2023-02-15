@@ -145,7 +145,7 @@ class DataSampler(object):
 
 
 class DataLoader(object):
-	def __init__(self, in_paths, tokenizer, batch_size = 16, neg_rate = 1, add_tokens=False, p_tuning=False, rdrop=False, model='bert'):
+	def __init__(self, in_paths, tokenizer, batch_size = 16, neg_rate = 1, max_desc_length = 512, add_tokens=False, p_tuning=False, rdrop=False, model='bert'):
 		
 		self.datasetName = in_paths['dataset'] 
 
@@ -191,6 +191,7 @@ class DataLoader(object):
 		
 
 		self.neg_rate = neg_rate
+		self.max_desc_length = max_desc_length
 
 		self.groundtruth, self.possible_entities= self.count_groundtruth()
 
@@ -273,9 +274,9 @@ class DataLoader(object):
 
 		if True:
 			# 512 tokens, 1 CLS, 1 SEP, 1 head, 1 rel, 1 tail, so 507 remaining.
-			h_n_tokens = 241
-			t_n_tokens = 241
-			r_n_tokens = 16
+			h_n_tokens = min(241, self.max_desc_length)
+			t_n_tokens = min(241, self.max_desc_length)
+			r_n_tokens = min(16, self.max_desc_length)
 
 		h, r, t = triple
 		
@@ -310,7 +311,7 @@ class DataLoader(object):
 		ent2id = self.ent2id
 		rel2id = self.rel2id
 		
-		n_tokens = 508
+		n_tokens = min(508, self.max_desc_length)
 
 		text_tokens = self.uid2tokens.get(target, [])[:n_tokens] 
 		

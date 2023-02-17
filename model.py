@@ -8,6 +8,7 @@ import numpy as np
 import pickle
 import random
 import copy
+import pdb
 
 num_deg_features = 2
 class LMKE(nn.Module):
@@ -118,7 +119,7 @@ class LMKE(nn.Module):
 		h_emb_list = []
 		r_emb_list = []
 		t_emb_list = []
-
+		#pdb.set_trace()
 		try:
 			triple_embs = logits[1]
 		except:

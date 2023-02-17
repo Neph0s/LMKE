@@ -360,6 +360,7 @@ class Trainer:
 					optimizer.zero_grad()
 					loss.backward()
 					optimizer.step()
+					scheduler.step()
 
 
 

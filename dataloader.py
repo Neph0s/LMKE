@@ -295,9 +295,9 @@ class DataLoader(object):
 				r_token = ['[rel_{}]'.format(rel2id[r])] if with_text['r'] else [tokenizer.mask_token]
 				t_token = ['[ent_{}]'.format(ent2id[t])] if with_text['t'] else [tokenizer.mask_token]
 		else:
-			h_token = ['[CLS]'] if with_text['h'] else [tokenizer.mask_token]
-			r_token = ['[CLS]'] if with_text['r'] else [tokenizer.mask_token]
-			t_token = ['[CLS]'] if with_text['t'] else [tokenizer.mask_token]
+			h_token = [self.tokenizer.cls_token] if with_text['h'] else [tokenizer.mask_token]
+			r_token = [self.tokenizer.cls_token] if with_text['r'] else [tokenizer.mask_token]
+			t_token = [self.tokenizer.cls_token] if with_text['t'] else [tokenizer.mask_token]
 
 
 		tokens = h_token + h_text_tokens + r_token + r_text_tokens + t_token + t_text_tokens  
@@ -321,7 +321,7 @@ class DataLoader(object):
 			else:
 				token = ['[rel_{}]'.format(rel2id[target])]
 		else:
-			token = ['[CLS]']
+			token = [self.tokenizer.cls_token]#'[CLS]']
 
 		tokens = token + text_tokens 
 		
@@ -369,6 +369,8 @@ class DataLoader(object):
 			triple = batch_triples[i]
 			h, r, t = triple
 
+			#import pdb
+			#pdb.set_trace()
 			if not self.add_tokens:
 				cls_pos, h_pos, r_pos, t_pos = torch.where((_==mask_idx) + (_==cls_idx))[0]
 			else:
@@ -503,6 +505,7 @@ class DataLoader(object):
 			return self.test_set
 
 	def my_tokenize(self, batch_tokens, max_length=512, padding=True, model='roberta'):
+		'''
 		if model == 'roberta':
 			start_tokens = ['<s>']
 			end_tokens = ['</s>']
@@ -511,6 +514,11 @@ class DataLoader(object):
 			start_tokens = ['[CLS]']
 			end_tokens = ['[SEP]']
 			pad_token = '[PAD]'
+		'''
+
+		start_tokens = [self.tokenizer.cls_token]
+		end_tokens = [self.tokenizer.sep_token]
+
 
 		batch_tokens = [ start_tokens + i + end_tokens for i in batch_tokens] 
 
@@ -524,6 +532,7 @@ class DataLoader(object):
 
 		token_type_ids = torch.zeros((batch_size, longest)).long()
 		attention_mask = torch.zeros((batch_size, longest)).long()
+
 
 		for i in range(batch_size):
 			tokens = self.tokenizer.convert_tokens_to_ids(batch_tokens[i])

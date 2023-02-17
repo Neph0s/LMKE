@@ -3,7 +3,7 @@ import os
 import argparse
 from tqdm import tqdm
 import torch
-#import pdb
+import pdb
 import random
 import pickle
 import numpy as np
@@ -30,7 +30,7 @@ if __name__ == '__main__':
 	parser.add_argument('--weight_decay', type=float, default=1e-7)
 
 	parser.add_argument('--data', type=str, default='fb15k-237') 
-	parser.add_argument('--plm', type=str, default='bert', choices = ['bert', 'bert_tiny', 'deberta'])
+	parser.add_argument('--plm', type=str, default='bert', choices = ['bert', 'bert_tiny', 'deberta', 'deberta_large', 'roberta', 'roberta_large'])
 	parser.add_argument('--description', type=str, default='desc')
 
 	parser.add_argument('--load_path', type=str, default=None)
@@ -80,6 +80,17 @@ if __name__ == '__main__':
 	elif arg.plm =='deberta':
 		plm_name = 'microsoft/deberta-v3-base'
 		t_model = 'bert'
+	elif arg.plm == 'deberta_large':
+		plm_name = 'microsoft/deberta-v3-large'
+		t_model = 'bert'
+	elif arg.plm == 'roberta_large':
+		plm_name = "roberta-large"
+		t_model = 'roberta'
+	elif arg.plm == 'roberta':
+		plm_name = "roberta-base"
+		t_model = 'roberta'
+
+
 
 	if arg.data == 'fb13':
 		in_paths = {
@@ -122,7 +133,7 @@ if __name__ == '__main__':
 	lm_tokenizer = AutoTokenizer.from_pretrained(plm_name, do_basic_tokenize=False, cache_dir = './cached_model')
 	lm_model = AutoModel.from_pretrained(plm_name, config=lm_config, cache_dir = './cached_model')
 	
-	
+	#pdb.set_trace()
 
 	data_loader = DataLoader(in_paths, lm_tokenizer, batch_size=arg.batch_size, neg_rate =neg_rate, max_desc_length = arg.max_desc_length,
 		add_tokens = arg.add_tokens, p_tuning = arg.p_tuning, rdrop = arg.rdrop, model = t_model)
@@ -161,6 +172,7 @@ if __name__ == '__main__':
 	optimizer = AdamW(param_group) # transformer AdamW
 
 	scheduler = get_constant_schedule_with_warmup(optimizer, num_warmup_steps=data_loader.step_per_epc)
+	#pdb.set_trace()
 	#scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=10000, num_training_steps=arg.epoch * data_loader.step_per_epc)
 
 

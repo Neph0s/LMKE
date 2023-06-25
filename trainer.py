@@ -319,8 +319,9 @@ class Trainer:
 							pos_set = set(pos_idx)
 							neg_idx = [ _ for _ in range(labels.shape[1]) if not _ in pos_set]
 							
-							''' Code for Exp of 'Importance of Negative Sampling Size'
-							neg_sampling_size = 2
+							# Code for Exp of 'Importance of Negative Sampling Size'
+
+							neg_sampling_size = 128
 							other_idx = [ _ for _ in range(labels.shape[1]) if _ != i]
 							other_idx = random.sample(other_idx, neg_sampling_size)
 
@@ -330,7 +331,7 @@ class Trainer:
 
 							assert ( len(pos_idx+neg_idx) == 1 + neg_sampling_size)
 							assert ( i in pos_idx)
-							'''
+							
 							
 							for j, bl in enumerate(bce_loss):
 								# separately add lm_loss, transe_loss, and ensembled_loss

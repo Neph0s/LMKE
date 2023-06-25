@@ -353,7 +353,7 @@ class LMKE(nn.Module):
 			#sim[it] = self.sim_classifier(torch.cat([target_pred, target_encoded, target_pred - target_encoded, target_pred * target_encoded], dim=-1)).T
 			
 			
-			sim[it] = self.sim_classifier(torch.cat([target_pred, target_encoded, target_pred - target_encoded, target_pred * target_encoded, deg_feature], dim=-1)).T#torch.nn.functional.cosine_similarity(target_encoded, target_pred) ##self.sim_classifier(torch.cat([target_pred, target_encoded, target_pred - target_encoded, target_pred * target_encoded, deg_feature], dim=-1)).T
+			sim[it] = self.sim_classifier(torch.cat([target_pred, target_encoded, target_pred - target_encoded, target_pred * target_encoded, deg_feature], dim=-1)).T
 			
 			'''
 			logits = self.sim_classifier[0](torch.cat([target_pred, target_encoded, target_pred - target_encoded, target_pred * target_encoded], dim=-1))

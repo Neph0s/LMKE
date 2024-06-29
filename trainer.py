@@ -446,7 +446,7 @@ class Trainer:
 						labels = [i[1] for i in batch]
 						labels = torch.tensor(labels).to(device)
 
-						preds = model(inputs, positions, mode, triple_degrees)
+						preds = model(inputs, positions, mode)
 						loss = criterion(preds, labels) 
 
 						pred_labels = preds.argmax(dim=1)

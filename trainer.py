@@ -277,7 +277,7 @@ class Trainer:
 								preds = model.match(target_preds, target_encodes, real_triple_degrees, mode)
 								
 							else:
-								preds, confidence = model(real_inputs, real_positions, mode)
+								preds = model(real_inputs, real_positions, mode)
 								if hyperparams['rdrop']:
 									preds1 = preds[:real_batch_size // 2]
 									preds1 = preds1.resize(preds1.shape[0] * preds1.shape[1], 1)
@@ -608,7 +608,7 @@ class Trainer:
 						
 							preds = model.match(target_preds, target_encodes, triple_degrees, mode, test=True, ent_list_degrees = ent_list_degrees)
 						else:
-							preds, confidence = model(inputs, positions, mode)
+							preds = model(inputs, positions, mode)
 						preds = sigmoid(preds)
 					
 					if hyperparams['use_structure']:
